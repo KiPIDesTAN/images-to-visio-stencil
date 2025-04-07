@@ -1,0 +1,47 @@
+[
+    {
+        "Name": "North",
+        "X": "Width*0.5",
+        "Y":"Height*1.1"
+    },
+    {
+        "Name": "NorthEast",
+        "X": "Width*1.1",
+        "Y":"Height*1.1"
+    },
+    {
+        "Name": "East",
+        "X": "Width*1.1",
+        "Y":"Height*0.5"
+    },
+    {
+        "Name": "SouthEast",
+        "X": "Width*1.1",
+        "Y":"Height*-0.1"
+    },
+    {
+        "Name": "South",
+        "X": "Width*0.5",
+        "Y":"Height*-0.1"
+    },
+    {
+        "Name": "SouthWest",
+        "X": "Width*-0.1",
+        "Y":"Height*-0.1"
+    },
+    {
+        "Name": "West",
+        "X": "Width*-0.1",
+        "Y":"Height*0.5"
+    },
+    {
+        "Name": "NorthWest",
+        "X": "Width*-0.1",
+        "Y":"Height*1.1"
+    },
+    {
+        "Name": "SouthOfText",
+        "X": "Width*0.5",
+        "Y":"-8mm"
+    }
+]
