@@ -1,27 +1,40 @@
-###########################################
-#   Title: Images to Visio Stencil
-#   Description: This script takes a directory of images and imports them into a Visio Stencil file.
-#   URL: https://github.com/KiPIDesTAN/images-to-visio-stencil
+###########################################################################
+# Script: create_stencil.ps1
+# Author: Adam Newhard
+# URL: https://github.com/KiPIDesTAN/visio-stencil-maker
 #
-#   NOTE: There is absolutely NO WARRANTY with this code. It is something I wrote
-#   for my architecture work and am sharing in the event someone else can use it.
-#   It is inspired by the work at https://github.com/David-Summers/Azure-Design.
-#   
-###########################################
-
-# Define the directory where images should be acquired from
-$buildDir = "<path to images here>"
+# Description:
+# The script below iterates through a folder of images and creates a stencil
+# from all those images. I use this frequently for architecture diagrams.
+# 
+# The script does the following:
+# 1. Gets a list of all images in a given folder
+# 2. Imports the image as a shape
+# 2. Scales the shape down to an appropriate size
+# 3. Creates a series of consistent connector points on the shape
+# 4. Adjusts the shape's text location and applies text to the shape
+# 5. Adds the shape to the master stencil
+# 6. Saves the final file as a stencil that can be opened in Visio for use in other files
+#
+# NOTE: Sometimes Visio does not do a good job of converting the SVG to PNG. In fact, some SVG
+# to PNG programs have a tough time. The most accurate solution I've found is to run rsvg-convert,
+# a Linux application, to convert the svg to png.
+#
+# rsvg-convert input.svg -o output.png
+#
+###########################################################################
 
 # Variables
 # When resizing the svg, this is the maximum dimension for the image.
 # The maxDimension is applied to the larger of height and width.
 $maxDimension = 20
+$fileTypeList = ".png", ".svg" # A list of image extensions to look for
 
-# Location of the JSON file defining the connection points for the object.
+# Location of the JSON file defining the connection points for the object
 $connectionPointFile = ".\shape_connectors.json"
-
-# Create the stencil name as the parent directory name with the first letter of the first word capitalized.
-$stencilName = $($buildDir -split '\\')[-1] -replace '^(.)', { $_.Value.ToUpper() }
+# Define the build directory
+$imageDir = "C:\Users\adamnewhard\OneDrive - Microsoft\Documents\Visio\adam_shapes"
+$savePath = $(Get-Location | Select-Object -ExpandProperty Path) + "\mystencil.vssx"
 
 # Define Visio constants
 # Indices defined here - https://learn.microsoft.com/en-us/office/vba/api/visio.vissectionindices
@@ -29,16 +42,20 @@ $visSectionProp = 243
 $visSectionConnectionPts = 7    # Connection points section
 $visTagDefault = 0
 
+# Used for the $visSectionProp to set the lable, prompt, and value fields
+$visCellPropLabel = 1
+$visCellPropPrompt = 2
+$visCellPropValue = 0
+
 # Load Visio COM object
 $visioApp = New-Object -ComObject Visio.Application
 $visioApp.Visible = $true
-
 
 # Load the connection point definitions
 $connectionPoints = Get-Content $connectionPointFile | ConvertFrom-Json
 
 # Get a sorted list of SVG files
-$svgFiles = Get-ChildItem -Path $buildDir -Filter *.svg | Sort-Object Name
+$svgFiles = Get-ChildItem -Path $imageDir | Where-Object { $_.extension -in $fileTypeList } | Sort-Object Name
 
  # Create a new Visio document
 $doc = $visioApp.Documents.Add("")
@@ -49,6 +66,8 @@ $page = $doc.Pages.Item(1) # Uncomment when working with a document
 $masters = $doc.Masters
 
 foreach ($svgFile in $svgFiles) {
+
+    Write-Output "Processing $($svgFile.Name)."
 
     # Drop the SVG onto the page
     $shape = $page.Import($svgFile.FullName)
@@ -79,7 +98,9 @@ foreach ($svgFile in $svgFiles) {
 
     # Add Shape sheet placeholders
     $shape.AddNamedRow($visSectionProp, "Label", $visTagDefault)
-    $shape.CellsSRC($visSectionProp, $rowIndex, 0).FormulaU = "`"$($shapeText)`""
+    $shape.CellsSRC($visSectionProp, $rowIndex, $visCellPropValue).FormulaU = "`"$($svgFile.Name)`""
+    $shape.CellsSRC($visSectionProp, $rowIndex, $visCellPropLabel).FormulaU = "`"$($shapeText)`""
+    $shape.CellsSRC($visSectionProp, $rowIndex, $visCellPropPrompt).FormulaU = "`"$($shapeText)`""
 
     # Set the text of the shape
     $shape.Text = $shapeText
@@ -115,10 +136,12 @@ foreach ($svgFile in $svgFiles) {
     # Delete the shape from the doc now that it's in the Master stencil
     $shape.Delete()
 
-    # # Close the document
-    # $doc.Close()
+
 }
 
 # Save the stencil when ready
-$doc.SaveAs($buildDir + "\$($stencilName).vssx")
+$doc.SaveAs($savePath)
+
+# Close the document
+$doc.Close()
 

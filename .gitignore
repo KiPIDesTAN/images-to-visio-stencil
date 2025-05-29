@@ -1,0 +1,2 @@
+# Ignore all Visio stencil files that may be created in the repo.
+**/*.vssx
