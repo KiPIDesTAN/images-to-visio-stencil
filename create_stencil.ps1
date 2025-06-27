@@ -28,7 +28,7 @@ $fileTypeList = ".png"
 # Location of the JSON file defining the connection points for the object
 $connectionPointFile = ".\shape_connectors.json"
 # Define the build directory
-$imageDir = "C:\Users\adamnewhard\OneDrive - Microsoft\Documents\Visio\Logos"
+$rootDir = "C:\Users\adamnewhard\OneDrive - Microsoft\Documents\Visio\Logos"
 # Where to save the vssx file that's created
 $saveDir = Join-Path $env:USERPROFILE "Documents\My Shapes" #'C:\Users\adamnewhard\OneDrive - Microsoft\Documents\Visio\Logos'
 # Path to inkscape cli, used to convert svgs to png
@@ -47,8 +47,8 @@ $connectionPoints = Get-Content $connectionPointFile | ConvertFrom-Json
 
 # Get a sorted list of usable file types and svgs.
 # We convert the svgs when a usable file type doesn't exist.
-$stencilFiles = Get-ChildItem -Path $imageDir | Where-Object { $_.extension -eq '.svg' } | Sort-Object Name
-$allFiles = Get-ChildItem -Path $imageDir | Where-Object { $_.extension -in $fileTypeList } | Sort-Object Name
+$stencilFiles = Get-ChildItem -Path $rootDir | Where-Object { $_.extension -eq '.svg' } | Sort-Object Name
+$allFiles = Get-ChildItem -Path $rootDir | Where-Object { $_.extension -in $fileTypeList } | Sort-Object Name
 
 foreach ($svg in $stencilFiles) {
     $fileExists = $allFiles | Where-Object { $_.BaseName -eq $svg.BaseName }
@@ -60,7 +60,7 @@ foreach ($svg in $stencilFiles) {
 }
 
 
-$stencilFiles = Get-ChildItem -Path $imageDir | Where-Object { $_.extension -in $fileTypeList } | Sort-Object Name
+$stencilFiles = Get-ChildItem -Path $rootDir | Where-Object { $_.extension -in $fileTypeList } | Sort-Object Name
 
 # Define Visio constants
 # Indices defined here - https://learn.microsoft.com/en-us/office/vba/api/visio.vissectionindices
@@ -79,7 +79,7 @@ $visioApp.Visible = $true
 
 # If the file already exists, open it. Otherwise, create a new file.
 if (Test-Path $savePath) {
-    $doc = $visioApp.Documents.Open($stencilPath)
+    $doc = $visioApp.Documents.Open($savePath)
 } else {
  # Create a new Visio document
     $doc = $visioApp.Documents.Add("")
@@ -104,7 +104,7 @@ foreach ($stencilFile in $stencilFiles) {
     Write-Output "Processing $($stencilFile.Name)."
 
     # Drop the SVG onto the page
-    $shape = $page.Import($stencilFile.FullName)
+    $shape = $page.Import("$($stencilFile.FullName)")
 
     # Set the text applied for the shape.
     $shapeText = $($stencilFile.BaseName)
